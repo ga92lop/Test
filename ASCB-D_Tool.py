@@ -205,7 +205,8 @@ class Application(tk.Frame):
                 spamreader = csv.reader(csvfile, delimiter=',')
                 headers = next(spamreader)
                 if "IRIG Time" not in headers or "Parameter Name" not in headers or "Value" not in headers:
-                    errormessage = "Please set FLTLINE to have IRIG Time, Parameter Name and Value in CSV file"
+                    errormessage = "Please configure FLIGHTLINE to set \"IRIG Time\", \"Parameter Name\" and " \
+                                   "\"Value\" in the header of CSV file"
                     tk.messagebox.showerror(title=None, message=errormessage)
                     return None
                 secound_row = next(spamreader)
