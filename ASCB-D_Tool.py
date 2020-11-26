@@ -5,7 +5,7 @@ from tkinter import messagebox
 import csv
 import os
 from PIL import ImageTk, Image
-import re
+import datetime
 
 
 class Application(tk.Frame):
@@ -23,9 +23,8 @@ class Application(tk.Frame):
         self.canvas.grid(row=0, column=0)
         self.create_widgets()
 
-
     def create_widgets(self):
-        # first row: button to select folder
+        # Select folder and file
         label0 = tk.Label(self.master)
         label0["text"] = "Current folder:"
         label0.config(bg=self.bgcolor, font=("Courier", 12))
@@ -42,84 +41,80 @@ class Application(tk.Frame):
         folderselection["text"] = "Select a folder"
         folderselection["command"] = lambda: self.folderselection()
         folderselection.config(bg=self.bgcolor)
-        self.canvas.create_window(830, 50, width=100, height=60,
-                                                 window=folderselection)
+        self.canvas.create_window(800, 50, width=100, height=30,
+                                  window=folderselection)
 
-        # second row: label for file and rate selection
         label2 = tk.Label(self.master)
         label2["text"] = "Select a file:"
         label2.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(120, 160, width=240, height=30,
+        self.canvas.create_window(100, 100, width=200, height=30,
                                   window=label2)
 
-        label3 = tk.Label(text="Resampling rate(Hz):")
-        label3.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(420, 160, width=200, height=30,
-                                  window=label3)
-
-        # third row: list box for files and rates
         self.fileselection = tk.ttk.Combobox(self.master)
         self.fileselection["values"] = self.list_files(self.defaultPath)
         self.fileselection.configure(state="readonly")
-        self.canvas.create_window(120, 200, width=240, height=30,
+        self.canvas.create_window(460, 100, width=480, height=30,
                                   window=self.fileselection)
+
+        # Function Start:
+        header = tk.Label(self.master)
+        header["text"] = "Functions:"
+        header.config(bg="lightgreen", font=("Courier", 12))
+        self.canvas.create_window(440, 150, width=880, height=30,
+                                  window=header)
+
+        # Resampling function
+        label3 = tk.Label(text="Resampling rate(Hz):")
+        label3.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(120, 200, width=200, height=30,
+                                  window=label3)
 
         rateselection = tk.ttk.Combobox(self.master)
         rateselection["values"] = (1, 2, 4, 8, 10, 16, 20)
         rateselection.configure(state="readonly")
-        self.canvas.create_window(420, 200, width=200, height=30,
+        self.canvas.create_window(420, 200, width=240, height=30,
                                   window=rateselection)
 
-        # forth row: button to quit and resample
-        ok = tk.Button(self.master, text="Resampling")
-        ok["command"] = lambda: self.resampling(self.fileselection.get(), rateselection.get())
-        ok.config(bg=self.bgcolor)
-        self.canvas.create_window(650, 180, width=100, height=60,
-                                  window=ok)
+        b_resampling = tk.Button(self.master, text="Resampling")
+        b_resampling["command"] = lambda: self.resampling(self.fileselection.get(), rateselection.get())
+        b_resampling.config(bg=self.bgcolor)
+        self.canvas.create_window(800, 200, width=100, height=30,
+                                  window=b_resampling)
+        self.check_var1 = tk.StringVar()
+        b_withheader = tk.Checkbutton(self.master, text="with header", variable=self.check_var1, onvalue="with header",
+                                      offvalue="No header")
+        b_withheader.config(bg=self.bgcolor, font=("Courier", 10))
+        self.canvas.create_window(650, 200, width=120, height=30,
+                                  window=b_withheader)
+        b_withheader.select()
 
+
+
+        # Reformat function
+        label3 = tk.Label(text="Match parameters with Values in columns and output a CSV file:")
+        label3.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(365, 250, width=690, height=30,
+                                  window=label3)
+
+        b_reformat = tk.Button(self.master, text="Reformat")
+        b_reformat["command"] = lambda: self.reformat_csv()
+        b_reformat.config(bg=self.bgcolor)
+        self.canvas.create_window(800, 250, width=100, height=30,
+                                  window=b_reformat)
+
+        # Button to quit
         quit = tk.Button(self.master, text="QUIT", fg="red", command=self.master.destroy)
         quit.config(bg=self.bgcolor)
-        self.canvas.create_window(830, 180, width=100, height=60,
+        self.canvas.create_window(830, 450, width=100, height=40,
                                   window=quit)
 
-    def resampling(self, filename, rate):
-        if filename == "" or rate == "":
-            errormessage = "please select one file and one resampling rate, thank you:D"
-            tk.messagebox.showerror(title=None, message=errormessage)
-            return None
-        if "_resampled_" in filename and "80Hz" not in filename:
-            errormessage = "Cannot resample file which is not 80Hz"
-            tk.messagebox.showerror(title=None, message=errormessage)
-            return None
-        else:
-            ration = int(80 / int(rate))
-            inputfile = self.label1["text"] + "/" + filename
-            Outputfile = inputfile[0:len(inputfile) - 4] + "_resampled_" + rate + "Hz.csv"
-            overwriteflag = True
-            if os.path.exists(Outputfile):
-                overwriteflag = tk.messagebox.askokcancel("resampled file exists","Resampled file exists, overwrite?")
-            if overwriteflag == False:
-                return None
-            try:
-                with open(inputfile, newline='') as csvfile:
-                    print("Open original data file")
-                    spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
-                    counter = 0
-                    with open(Outputfile, 'w', newline='') as csvfile:
-                        print("Open resampled data file")
-                        filewriter = csv.writer(csvfile, delimiter=' ',
-                                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                        print("Writing data...")
-                        for row in spamreader:
-                            if counter == ration:
-                                counter = 0
-                            if counter == 0:
-                                filewriter.writerow(row)
-                            counter += 1
-                print("Finished:D")
-            except:
-                errormessage = "please make sure data file is closed and accessible, thank you:D"
-                tk.messagebox.showerror(title=None, message=errormessage)
+    """"
+    Back end functions start, Including:
+    folder selection
+    list files and section
+    resampling
+    reformat
+    """
 
     def folderselection(self):
         currentfolder = self.label1["text"]
@@ -140,9 +135,128 @@ class Application(tk.Frame):
             self.label1["fg"] = "green"
         return csvfiles
 
+    def resampling(self, filename, rate):
+        if filename == "" or rate == "":
+            errormessage = "please select one file and one resampling rate, thank you:D"
+            tk.messagebox.showerror(title=None, message=errormessage)
+            return None
+        if "_resampled_" in filename and "80Hz" not in filename:
+            errormessage = "Cannot resample file which is not 80Hz"
+            tk.messagebox.showerror(title=None, message=errormessage)
+            return None
+        ration = int(80 / int(rate))
+        inputfile = self.label1["text"] + "/" + filename
+        Outputfile = inputfile[0:len(inputfile) - 4] + "_resampled_" + rate + "Hz.csv"
+        overwriteflag = True
+        if os.path.exists(Outputfile):
+            overwriteflag = tk.messagebox.askokcancel("resampled file exists", "Resampled file exists, overwrite?")
+        if overwriteflag == False:
+            return None
+        try:
+            with open(inputfile, newline='') as csvfile:
+                print("Open original data file")
+                spamreader = csv.reader(csvfile)
+                counter = 0
+                with open(Outputfile, 'w', newline='') as newcsvfile:
+                    print("Open resampled data file")
+                    filewriter = csv.writer(newcsvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+                    print("Writing data...")
+
+                    # check box clicked, write header in new file, start resampling from second row
+                    if self.check_var1.get() == "with header":
+                        header = next(spamreader)
+                        filewriter.writerow(header)
+
+                    for row in spamreader:
+                        if counter == ration:
+                            counter = 0
+                        if counter == 0:
+                            filewriter.writerow(row)
+                        counter += 1
+            print("Finished:D")
+        except PermissionError:
+            errormessage = "please make sure data file is closed and accessible, thank you:D"
+            tk.messagebox.showerror(title=None, message=errormessage)
+
+    def reformat_csv(self):
+        if self.fileselection.get() == "":
+            errormessage = "please select one file, thank you:D"
+            tk.messagebox.showerror(title=None, message=errormessage)
+            return None
+
+        inputfile = self.label1["text"] + "/" + self.fileselection.get()
+        Outputfile = inputfile[0:len(inputfile) - 4] + "_reformat.csv"
+        overwriteflag = True
+        if os.path.exists(Outputfile):
+            overwriteflag = tk.messagebox.askokcancel("resampled file exists", "Resampled file exists, overwrite?")
+        if overwriteflag == False:
+            return None
+
+        new_headers = list()
+        new_headers.append("UTC Time")
+        parameter_position = 0
+        col_count = 0
+        values_position = list()
+        values = list()
+        year = str(datetime.datetime.today().year)
+        try:
+            with open(inputfile, newline='') as csvfile:
+                print("Open original file")
+                spamreader = csv.reader(csvfile, delimiter=',')
+                headers = next(spamreader)
+                if "IRIG Time" not in headers or "Parameter Name" not in headers or "Value" not in headers:
+                    errormessage = "Please set FLTLINE to have IRIG Time, Parameter Name and Value in CSV file"
+                    tk.messagebox.showerror(title=None, message=errormessage)
+                    return None
+                secound_row = next(spamreader)
+                print("Matching MNEs...")
+                for header in headers:
+                    if header == "IRIG Time":
+                        values_position.append(col_count)
+                    if header == "Parameter Name":
+                        parameter_position = col_count
+                    if header == "Value" and secound_row[col_count].strip() != "":
+                        new_headers.append(secound_row[parameter_position][2:])
+                        values_position.append(col_count)
+                    col_count += 1
+
+                parameter_position = 0
+                for col in secound_row:
+                    if parameter_position in values_position:
+                        if parameter_position == values_position[0]:
+                            utc_time_str = year + ":" + col
+                            utc_time = datetime.datetime.strptime(utc_time_str, '%Y:%j:%H:%M:%S.%f')
+                            values.append(utc_time)
+                        else:
+                            values.append(col)
+                    parameter_position += 1
+                print("Create New file and Writing data...")
+
+                with open(Outputfile, 'w', newline='') as newcsvfile:
+                    filewriter = csv.writer(newcsvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+                    filewriter.writerow(new_headers)
+                    filewriter.writerow(values)
+                    for row in spamreader:
+                        values.clear()
+                        parameter_position = 0
+                        for col in row:
+                            if parameter_position in values_position:
+                                if parameter_position == values_position[0]:
+                                    utc_time_str = year + ":" + col
+                                    utc_time = datetime.datetime.strptime(utc_time_str, '%Y:%j:%H:%M:%S.%f')
+                                    values.append(utc_time)
+                                else:
+                                    values.append(col)
+                            parameter_position += 1
+                        filewriter.writerow(values)
+                print("reformat finished!:D")
+        except PermissionError:
+            errormessage = "please make sure data file is closed and accessible, thank you:D"
+            tk.messagebox.showerror(title=None, message=errormessage)
+
 
 root = tk.Tk()
-root.title("Welcome to ASCB-D CSV Resampling")
+root.title("Welcome to ASCB-D CSV Data Processing Tool")
 root.geometry('880x500+500+200')
 root.resizable(0, 0)
 root.configure(bg='white')
