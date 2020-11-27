@@ -6,7 +6,7 @@ import csv
 import os
 from PIL import ImageTk, Image
 import datetime
-
+import re
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -66,7 +66,7 @@ class Application(tk.Frame):
         # Resampling function
         label3 = tk.Label(text="Resampling rate(Hz):")
         label3.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(120, 200, width=200, height=30,
+        self.canvas.create_window(130, 200, width=200, height=30,
                                   window=label3)
 
         rateselection = tk.ttk.Combobox(self.master)
@@ -91,10 +91,20 @@ class Application(tk.Frame):
 
 
         # Reformat function
-        label3 = tk.Label(text="Match parameters with Values in columns and output a CSV file:")
-        label3.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(365, 250, width=690, height=30,
-                                  window=label3)
+        label4 = tk.Label(text="UTC Year:")
+        label4.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(80, 250, width=100, height=30,
+                                  window=label4)
+        self.b_utcyear = tk.Entry("")
+        self.b_utcyear.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(270, 250, width=100, height=30,
+                                  window=self.b_utcyear)
+
+        label4 = tk.Label(text="(Use this year when no input)")
+        label4.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(480, 250, width=300, height=30,
+                                  window=label4)
+
 
         b_reformat = tk.Button(self.master, text="Reformat")
         b_reformat["command"] = lambda: self.reformat_csv()
@@ -183,6 +193,17 @@ class Application(tk.Frame):
             errormessage = "please select one file, thank you:D"
             tk.messagebox.showerror(title=None, message=errormessage)
             return None
+        if self.b_utcyear.get() == "":
+            utcyear = str(datetime.datetime.today().year)
+        if self.b_utcyear.get() != "":
+            template = "^20[1-2][0-9]$"
+            inputyear = self.b_utcyear.get()
+            if re.match(template, inputyear) == None:
+                errormessage = "please input right format of year 20xx, thank you:D"
+                tk.messagebox.showerror(title=None, message=errormessage)
+                return None
+            else:
+                utcyear = inputyear
 
         inputfile = self.label1["text"] + "/" + self.fileselection.get()
         Outputfile = inputfile[0:len(inputfile) - 4] + "_reformat.csv"
@@ -198,7 +219,6 @@ class Application(tk.Frame):
         col_count = 0
         values_position = list()
         values = list()
-        year = str(datetime.datetime.today().year)
         try:
             with open(inputfile, newline='') as csvfile:
                 print("Open original file")
@@ -217,7 +237,7 @@ class Application(tk.Frame):
                     if header == "Parameter Name":
                         parameter_position = col_count
                     if header == "Value" and secound_row[col_count].strip() != "":
-                        new_headers.append(secound_row[parameter_position][2:])
+                        new_headers.append(secound_row[parameter_position][3:])
                         values_position.append(col_count)
                     col_count += 1
 
@@ -225,7 +245,7 @@ class Application(tk.Frame):
                 for col in secound_row:
                     if parameter_position in values_position:
                         if parameter_position == values_position[0]:
-                            utc_time_str = year + ":" + col
+                            utc_time_str = utcyear + ":" + col
                             utc_time = datetime.datetime.strptime(utc_time_str, '%Y:%j:%H:%M:%S.%f')
                             values.append(utc_time)
                         else:
@@ -243,7 +263,7 @@ class Application(tk.Frame):
                         for col in row:
                             if parameter_position in values_position:
                                 if parameter_position == values_position[0]:
-                                    utc_time_str = year + ":" + col
+                                    utc_time_str = utcyear + ":" + col
                                     utc_time = datetime.datetime.strptime(utc_time_str, '%Y:%j:%H:%M:%S.%f')
                                     values.append(utc_time)
                                 else:
