@@ -97,16 +97,28 @@ class Application(tk.Frame):
                                   window=label41)
 
         # fifth row: button to rename, merge data and quit
-        rename = tk.Button(self.master, text="Rename")
+        rename_ASCB_D = tk.Button(self.master, text="ASCB-D_Rename")
+        rename_ASCB_D["command"] = lambda: self.rename_ASCB()
+        rename_ASCB_D.config(bg=self.bgcolor)
+        self.canvas.create_window(80, 400, width=100, height=60,
+                                  window=rename_ASCB_D)
+
+        label5 = tk.Label(self.master)
+        label5["text"] = "Only Recording \n Num necessary"
+        label5.config(bg=self.bgcolor)
+        self.canvas.create_window(180, 400, width=100, height=60,
+                                  window=label5)
+
+        rename = tk.Button(self.master, text="PCAP_Rename")
         rename["command"] = lambda: self.rename()
         rename.config(bg=self.bgcolor)
-        self.canvas.create_window(80, 400, width=100, height=60,
+        self.canvas.create_window(320, 400, width=100, height=60,
                                   window=rename)
 
         merge = tk.Button(self.master, text="Merge tdms")
         merge["command"] = lambda: self.mergingtdms()
         merge.config(bg=self.bgcolor)
-        self.canvas.create_window(420, 400, width=100, height=60,
+        self.canvas.create_window(560, 400, width=100, height=60,
                                   window=merge)
 
         quit = tk.Button(self.master, text="QUIT", fg="red", command=self.master.destroy)
@@ -115,11 +127,17 @@ class Application(tk.Frame):
                                   window=quit)
 
         # sixth row: button to rename, merge data and quit
-        rename = tk.Button(self.master, text="Redo")
-        rename["command"] = lambda: self.redo_rename()
-        rename.config(bg=self.bgcolor)
+        re_do_ASCB = tk.Button(self.master, text="Redo")
+        re_do_ASCB["command"] = lambda: self.redo_rename_ASCB()
+        re_do_ASCB.config(bg=self.bgcolor)
         self.canvas.create_window(80, 470, width=100, height=40,
-                                  window=rename)
+                                  window=re_do_ASCB)
+
+        re_do_pcap = tk.Button(self.master, text="Redo")
+        re_do_pcap["command"] = lambda: self.redo_rename()
+        re_do_pcap.config(bg=self.bgcolor)
+        self.canvas.create_window(320, 470, width=100, height=40,
+                                  window=re_do_pcap)
 
     def folderselection(self):
         currentfolder = self.label1["text"]
@@ -128,8 +146,31 @@ class Application(tk.Frame):
             selectedfolder = currentfolder
         self.label1["text"] = selectedfolder
 
+    def rename_ASCB(self):
+        if not self.inputcheck("ASCB_D") is True:
+            return None
+        currentfolder = self.label1["text"] + "/"
+        recordingnum = self.recordingnum.get()
+        renamedfiles = 0
+        for f in os.listdir(currentfolder):
+            if not re.match("ASCB_RAW", f) is None:
+                old_name = currentfolder + f
+                new_name = currentfolder + recordingnum + "_" + f
+                try:
+                    os.rename(old_name, new_name)
+                    renamedfiles += 1
+                except PermissionError:
+                    messagebox.showerror("Cannot rename", "Cannot rename, make sure files are accessible and not used")
+        if renamedfiles == 0:
+            return messagebox.showerror("No File", "No ASCB-D data file with name ASCB_RAW_xx.xx to be renamed")
+        else:
+            return messagebox.showinfo("Finish Renaming",
+                                       "Rename finished, please work on Pcap files")
+
+
+
     def rename(self):
-        if not self.inputcheck() is True:
+        if not self.inputcheck("Pcap") is True:
             return None
         currentfolder = self.label1["text"] + "/"
         recordingnum = self.recordingnum.get()
@@ -143,7 +184,7 @@ class Application(tk.Frame):
                 try:
                     os.rename(old_name, new_name)
                     renamedfiles += 1
-                except:
+                except PermissionError:
                     messagebox.showerror("Cannot rename", "Cannot rename, make sure files are accessible and not used")
         if renamedfiles == 0:
             return messagebox.showerror("No File", "No Pcap file with name xxxx_xxxx to be renamed")
@@ -153,10 +194,7 @@ class Application(tk.Frame):
                                        "and name tdms following time sequence then come back to merging")
 
     def mergingtdms(self):
-        if not self.inputcheck() is True:
-            return None
-        if re.match("^[0-9]{3}$", self.powercyclenum.get()) is None:
-            messagebox.showerror("Power Cycle Num", "Input three digits of Power cycle Number")
+        if not self.inputcheck("mergeTDMS") is True:
             return None
         currentfolder = self.label1["text"] + "/"
         for f in os.listdir(currentfolder):
@@ -194,14 +232,40 @@ class Application(tk.Frame):
                                                      "more power cycles, clear up the folder, and start from renaming "
                                                      ".cap file from other cycle ")
 
-    def inputcheck(self):
+    def inputcheck(self, mode):
         if re.match("^[0-9]{3}$", self.recordingnum.get()) is None:
             messagebox.showerror("Recording Number", "Input three digits of Recording Number")
             return None
-        if re.match("^[0-9]{3}$", self.descriptionnum.get()) is None:
+        if re.match("^[0-9]{3}$", self.descriptionnum.get()) is None and mode != "ASCB_D":
             messagebox.showerror("Description Number", "Input three digits of Description Number")
             return None
+        if re.match("^[0-9]{3}$", self.powercyclenum.get()) is None and mode == "mergeTDMS":
+            messagebox.showerror("Power Cycle Num", "Input three digits of Power cycle Number")
+            return None
         return True
+
+    def redo_rename_ASCB(self):
+        currentfolder = self.label1["text"] + "/"
+        renamedfile = 0
+        for f in os.listdir(currentfolder):
+            if not re.match("[0-9]{3}_ASCB_RAW", f) is None:
+                renamedfile += 1
+        if renamedfile == 0:
+            messagebox.showerror("No renamed PCAP file", "There is no renamed file in current folder")
+            return None
+        else:
+            redo_flag = False
+            redo_flag = messagebox.askokcancel("redo_rename", "Do you want to redo the rename for ASCB_D, i.e. delete "
+                                                              "3 digs of recording num at the start of these files")
+            if redo_flag is False:
+                return None
+
+        for f in os.listdir(currentfolder):
+            if not re.match("[0-9]{3}_ASCB_RAW", f) is None:
+                old_name = currentfolder + f
+                new_name = currentfolder + f[4:]
+                os.rename(old_name, new_name)
+        return messagebox.showinfo("", "redo finished")
 
     def redo_rename(self):
         currentfolder = self.label1["text"] + "/"
