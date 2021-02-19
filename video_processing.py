@@ -26,34 +26,53 @@ class Application(tk.Frame):
     def create_widgets(self):
         # Select folder and file
         label0 = tk.Label(self.master)
-        label0["text"] = "Current folder:"
+        label0["text"] = "Input folder:"
         label0.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(75, 50, width=150, height=30,
+        self.canvas.create_window(75, 30, width=150, height=30,
                                   window=label0)
 
         self.label1 = tk.Label(self.master)
         self.label1["text"] = self.defaultPath
         self.label1.config(bg=self.bgcolor)
-        self.canvas.create_window(425, 50, width=550, height=30,
+        self.canvas.create_window(425, 30, width=550, height=30,
                                   window=self.label1)
 
         folderselection = tk.Button(self.master)
         folderselection["text"] = "Select a folder"
         folderselection["command"] = lambda: self.folderselection()
         folderselection.config(bg=self.bgcolor)
-        self.canvas.create_window(800, 50, width=100, height=30,
+        self.canvas.create_window(800, 30, width=100, height=30,
                                   window=folderselection)
+
+        output_label = tk.Label(self.master)
+        output_label["text"] = "Output folder:"
+        output_label.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(75, 70, width=150, height=30,
+                                  window=output_label)
+
+        self.outputfolder = tk.Label(self.master)
+        self.outputfolder["text"] = "Same with input folder by default"
+        self.outputfolder.config(bg=self.bgcolor)
+        self.canvas.create_window(425, 70, width=550, height=30,
+                                  window=self.outputfolder)
+
+        outfolderselection = tk.Button(self.master)
+        outfolderselection["text"] = "Select a folder"
+        outfolderselection["command"] = lambda: self.outputfolderselection()
+        outfolderselection.config(bg=self.bgcolor)
+        self.canvas.create_window(800, 70, width=100, height=30,
+                                  window=outfolderselection)
 
         label2 = tk.Label(self.master)
         label2["text"] = "Select a file:"
         label2.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(100, 100, width=200, height=30,
+        self.canvas.create_window(100, 110, width=200, height=30,
                                   window=label2)
 
         self.fileselection = tk.ttk.Combobox(self.master)
         self.fileselection["values"] = self.list_files(self.defaultPath)
         self.fileselection.configure(state="readonly")
-        self.canvas.create_window(460, 100, width=480, height=30,
+        self.canvas.create_window(460, 110, width=480, height=30,
                                   window=self.fileselection)
 
         # Function Start:
@@ -74,26 +93,52 @@ class Application(tk.Frame):
 
 
         # Remove Audio
+        year_lable = tk.Label(self.master)
+        year_lable["text"] = "Year"
+        self.canvas.create_window(150, 190, width=60, height=30,
+                                  window=year_lable)
+
+        month_lable = tk.Label(self.master)
+        month_lable["text"] = "Month"
+        self.canvas.create_window(215, 190, width=40, height=30,
+                                  window=month_lable)
+
+        day_lable = tk.Label(self.master)
+        day_lable["text"] = "Day"
+        self.canvas.create_window(270, 190, width=40, height=30,
+                                  window=day_lable)
+
         test_date = tk.Label(self.master)
         test_date["text"] = "Test Date:"
         self.canvas.create_window(60, 225, width=100, height=40,
                                   window=test_date)
 
-        self.date_input = tk.Entry("")
-        self.date_input.config(font=16)
-        self.canvas.create_window(200, 225, width=160, height=40,
-                                  window=self.date_input)
 
+        self.year_input = tk.Entry("")
+        self.year_input.config(font=16)
+        self.canvas.create_window(150, 225, width=60, height=40,
+                                  window=self.year_input)
+
+        self.month_input = tk.Entry("")
+        self.month_input.config(font=16)
+        self.canvas.create_window(215, 225, width=40, height=40,
+                                  window=self.month_input)
+
+        self.day_input = tk.Entry("")
+        self.day_input.config(font=16)
+        self.canvas.create_window(270, 225, width=40, height=40,
+                                  window=self.day_input)
 
         activity = tk.Label(self.master)
         activity["text"] = "Activity:"
         self.canvas.create_window(400, 225, width=100, height=40,
                                   window=activity)
 
-        self.activity_input = tk.Entry("")
-        self.activity_input.config(font=16)
+        self.activity_input = tk.ttk.Combobox(self.master)
+        self.activity_input.config(font=16, state="readonly")
         self.canvas.create_window(540, 225, width=150, height=40,
                                   window=self.activity_input)
+        self.activity_input["values"] = ["FLT", "ER", "LST", "HST", "GT"]
 
 
         b_removeAudio = tk.Button(self.master, text="Remove Audio")
@@ -162,6 +207,13 @@ class Application(tk.Frame):
         self.fileselection['values'] = self.list_files(selectedfolder)
         self.fileselection.current(0)
 
+    def outputfolderselection(self):
+        currentfolder = self.outputfolder["text"]
+        selectedfolder = tk.filedialog.askdirectory()
+        if selectedfolder == "":
+            selectedfolder = currentfolder
+        self.outputfolder["text"] = selectedfolder
+
     def list_files(self, directory):
         videofiles = []
         for f in os.listdir(directory):
@@ -185,11 +237,17 @@ class Application(tk.Frame):
         return videofiles
 
     def check(self, filename, path):
-        if re.match("^20[0-9]{2}[0-1][0-9][0-3][0-9]$", self.date_input.get()) is None:
-            messagebox.showerror("Test date", "Input Year(xxxx)Month(xx)Day(xx), e.g. 20201021")
+        if re.match("^20[0-9]{2}$", self.year_input.get()) is None:
+            messagebox.showerror("Test date", "Input Year(20xx)")
+            return None
+        if re.match("^0[1-9]$", self.month_input.get()) is None and re.match("^1[0-2]$", self.month_input.get()) is None:
+            messagebox.showerror("Test date", "Input Month(xx)")
+            return None
+        if re.match("^0[1-9]$", self.day_input.get()) is None and re.match("^[1-2][0-9]$", self.day_input.get()) is None and re.match("^3[0-1]$", self.day_input.get()) is None:
+            messagebox.showerror("Test date", "Input Day(xx)")
             return None
         if len(self.activity_input.get().strip()) == 0:
-            messagebox.showerror("Activity", "Input Test Activity, e.g. FLT10")
+            messagebox.showerror("Activity", "Select a Test Activity")
             return None
         if filename == "":
             message = "Select a file or all files to be processed"
@@ -211,26 +269,40 @@ class Application(tk.Frame):
         return True
 
     def compress(self, filename):
-        if not self.check(filename, self.label1["text"]) is True:
+        if self.outputfolder["text"] == "Same with input folder by default":
+            filepath = self.label1["text"]
+        else:
+            filepath = self.label1["text"] + self.outputfolder["text"]
+        if not self.check(filename, filepath) is True:
             return None
         ffmpegoperation = " -crf 23 "
         mode = "compress"
         self.operation(filename, ffmpegoperation, mode)
 
     def removeAudio(self, filename):
-        if not self.check(filename, self.label1["text"]) is True:
+        if self.outputfolder["text"] == "Same with input folder by default":
+            filepath = self.label1["text"]
+        else:
+            filepath = self.label1["text"] + self.outputfolder["text"]
+        if not self.check(filename, filepath) is True:
             return None
         ffmpegoperation = " -map 0:0 -vcodec copy "
         mode = "Remove Audio"
         self.operation(filename, ffmpegoperation, mode)
 
     def operation(self, filename, ffmpegoperation, mode):
+        outputprefix = self.year_input.get() + self.month_input.get() + self.day_input.get() + "_" + self.activity_input.get() + "_"
         if filename == "All":
-            outputprefix = self.date_input.get() + "_" + self.activity_input.get() + "_"
-            for f in os.listdir(self.label1["text"]):
-                if outputprefix in f:
-                    messagebox.showerror("File exists", outputprefix + "xxx already exist")
-                    return None
+            if self.outputfolder["text"] != "Same with input folder by default":
+                for f in os.listdir(self.outputfolder["text"]):
+                    if outputprefix in f:
+                        messagebox.showerror("File exists", outputprefix + "xxx already exist")
+                        return None
+            else:
+                for f in os.listdir(self.label1["text"]):
+                    if outputprefix in f:
+                        messagebox.showerror("File exists", outputprefix + "xxx already exist")
+                        return None
             command = ""
             filenum = 1
             files =list()
@@ -254,7 +326,6 @@ class Application(tk.Frame):
             totalcommand = "start /wait cmd /c " + "\"" + command + "\""
             os.system(totalcommand)
         if filename != "All" and filename != "":
-            outputprefix = self.date_input.get() + "_" + self.activity_input.get() + "_"
             f = self.fileselection.get()
             if mode == "compress":
                 if (".mp4" not in f )and(".MP4" not in f):
@@ -268,24 +339,29 @@ class Application(tk.Frame):
 
     def cmdgenerate(self, inputfilename, outputfilename, operation):
         input = self.label1["text"].replace("/", "\\") + "\\" + inputfilename
-        output = self.label1["text"].replace("/", "\\") + "\\" + outputfilename
+        if self.outputfolder["text"] == "Same with input folder by default":
+            outputpath = self.label1["text"].replace("/", "\\") + "\\"
+            output = outputpath + outputfilename
+        else:
+            outputpath = self.outputfolder["text"].replace("/", "\\") + "\\"
+            output = outputpath + outputfilename
         while os.path.exists(output):
             filenum = output[len(output)-6:len(output)-4]
             if filenum[0] == "0" and filenum[1] != "9":
                 numoffile = int(filenum) + 1
                 print(str(numoffile))
-                output = self.label1["text"].replace("/", "\\") + "\\" + outputfilename[:len(outputfilename)-5] + str(numoffile) + outputfilename[len(outputfilename)-4:]
+                output = outputpath + outputfilename[:len(outputfilename)-5] + str(numoffile) + outputfilename[len(outputfilename)-4:]
                 print(output)
             else:
                 numoffile = int(filenum) + 1
-                output = self.label1["text"].replace("/", "\\") + "\\" + outputfilename[:len(outputfilename)-6] + str(numoffile) + outputfilename[len(outputfilename)-4:]
+                output = outputpath + outputfilename[:len(outputfilename)-6] + str(numoffile) + outputfilename[len(outputfilename)-4:]
                 print(output)
         currentfolder = os.getcwd()
         cmdpath = currentfolder + "\\ffmpeg\\bin\\"
         cmdcommand = cmdpath + "ffmpeg -i " + input + operation + output
         return cmdcommand
 
-    def gettimeslice(self, time1, time2, inname, outname, path):
+    def gettimeslice(self, time1, time2, inname, outname, pathin):
         if inname == "" or inname == "All":
             message = "Select a file to be processed"
             messagebox.showerror(title="Select a file", message=message)
@@ -294,10 +370,18 @@ class Application(tk.Frame):
             message = "There should not be a blank, ^ or & in the file name"
             messagebox.showerror(title="Select a file", message=message)
             return None
-        if " " in path or "^" in path or "&" in path:
+        if " " in pathin or "^" in pathin or "&" in pathin:
             message = "There should not be a blank, ^ or & in the file path"
             messagebox.showerror(title="Select a folder", message=message)
             return None
+        if self.outputfolder["text"] == "Same with input folder by default":
+            pathout = pathin
+        if self.outputfolder["text"] != "Same with input folder by default":
+            pathout = self.outputfolder["text"]
+            if " " in pathout or "^" in pathout or "&" in pathout:
+                message = "There should not be a blank, ^ or & in the file path"
+                messagebox.showerror(title="Select a folder", message=message)
+                return None
         if re.match("^[0-5][0-9]:[0-5][0-9]:[0-5][0-9]$", time1) is None:
             messagebox.showerror("Start Time", "Input hh:mm:ss, e.g.00:08:10")
             return None
@@ -323,11 +407,12 @@ class Application(tk.Frame):
                           "/, \\, :, *, ?, \", <, >, |,  blank, ^, &"
                 messagebox.showerror(title="wrong name", message=message)
                 return None
-        output = self.label1["text"].replace("/", "\\") + "\\" + outname + inname[len(inname)-4:]
+
+        output = pathout.replace("/", "\\") + "\\" + outname + inname[len(inname)-4:]
         if os.path.exists(output):
             overwriteflag = False
             overwriteflag = overwriteflag = tk.messagebox.askokcancel("File exists", "Slice exists, overwrite?")
-            if overwriteflag == False:
+            if not overwriteflag:
                 return None
         input = self.label1["text"].replace("/", "\\") + "\\" + inname
         currentfolder = os.getcwd()
