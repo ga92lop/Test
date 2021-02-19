@@ -251,7 +251,7 @@ class Application(tk.Frame):
             if not re.match("[0-9]{3}_ASCB_RAW", f) is None:
                 renamedfile += 1
         if renamedfile == 0:
-            messagebox.showerror("No renamed PCAP file", "There is no renamed file in current folder")
+            messagebox.showerror("No renamed file", "There is no renamed file in current folder")
             return None
         else:
             redo_flag = False
@@ -274,7 +274,7 @@ class Application(tk.Frame):
             if not re.match("t1310[0-9]{3}_[0-9]{3}_[0-9]{4}_[0-9]{4}.cap", f) is None:
                 renamedfile += 1
         if renamedfile == 0:
-            messagebox.showerror("No renamed PCAP file", "There is no renamed file in current folder")
+            messagebox.showerror("No renamed file", "There is no renamed file in current folder")
             return None
         else:
             redo_flag = False
