@@ -316,14 +316,17 @@ class Application(tk.Frame):
             message = "Input a name for slice"
             messagebox.showerror(title="Input Necessary", message=message)
             return None
-        if " " in outname or "^" in outname or "&" in outname:
-            message = "There should not be a blank, ^ or &  in slice name"
-            messagebox.showerror(title="wrong name", message=message)
-            return None
+        wrongname = ["/", "\\", ":", "*", "?", "\"", "<", ">", "|", " ", "^", "&"]
+        for cha in wrongname:
+            if cha in outname:
+                message = "Following characters should not be in slice name:" \
+                          "/, \\, :, *, ?, \", <, >, |,  blank, ^, &"
+                messagebox.showerror(title="wrong name", message=message)
+                return None
         output = self.label1["text"].replace("/", "\\") + "\\" + outname + inname[len(inname)-4:]
         if os.path.exists(output):
             overwriteflag = False
-            overwriteflag = overwriteflag = tk.messagebox.askokcancel("resampled file exists", "Resampled file exists, overwrite?")
+            overwriteflag = overwriteflag = tk.messagebox.askokcancel("File exists", "Slice exists, overwrite?")
             if overwriteflag == False:
                 return None
         input = self.label1["text"].replace("/", "\\") + "\\" + inname
