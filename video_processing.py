@@ -195,9 +195,13 @@ class Application(tk.Frame):
             message = "Select a file or all files to be processed"
             messagebox.showerror(title="Select a file", message=message)
             return None
-        if " " in path:
-            message = "There should not be a blank in the file path"
+        if " " in filename or "^" in filename or "&" in filename:
+            message = "There should not be a blank, ^ or &  in the file name"
             messagebox.showerror(title="Select a file", message=message)
+            return None
+        if " " in path or "^" in path or "&" in path:
+            message = "There should not be a blank, ^ or & in the file path"
+            messagebox.showerror(title="Select a folder", message=message)
             return None
         if filename == "All":
             if len(self.fileselection["values"]) == 1:
@@ -286,9 +290,13 @@ class Application(tk.Frame):
             message = "Select a file to be processed"
             messagebox.showerror(title="Select a file", message=message)
             return None
-        if " " in path:
-            message = "There should not be a blank in the file path"
-            messagebox.showerror(title="Wrong Path", message=message)
+        if " " in inname or "^" in inname or "&" in inname:
+            message = "There should not be a blank, ^ or & in the file name"
+            messagebox.showerror(title="Select a file", message=message)
+            return None
+        if " " in path or "^" in path or "&" in path:
+            message = "There should not be a blank, ^ or & in the file path"
+            messagebox.showerror(title="Select a folder", message=message)
             return None
         if re.match("^[0-5][0-9]:[0-5][0-9]:[0-5][0-9]$", time1) is None:
             messagebox.showerror("Start Time", "Input hh:mm:ss, e.g.00:08:10")
@@ -307,6 +315,10 @@ class Application(tk.Frame):
         if outname =="":
             message = "Input a name for slice"
             messagebox.showerror(title="Input Necessary", message=message)
+            return None
+        if " " in outname or "^" in outname or "&" in outname:
+            message = "There should not be a blank, ^ or &  in slice name"
+            messagebox.showerror(title="wrong name", message=message)
             return None
         output = self.label1["text"].replace("/", "\\") + "\\" + outname + inname[len(inname)-4:]
         if os.path.exists(output):
