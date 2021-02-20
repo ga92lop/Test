@@ -4,9 +4,9 @@ from tkinter import filedialog
 from tkinter import messagebox
 import os
 from PIL import ImageTk, Image
-import datetime
 import re
-import subprocess
+import cv2
+
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -89,9 +89,6 @@ class Application(tk.Frame):
         self.canvas.create_window(750, 200, width=100, height=40,
                                   window=b_compression)
 
-
-
-
         # Remove Audio
         year_lable = tk.Label(self.master)
         year_lable["text"] = "Year"
@@ -112,7 +109,6 @@ class Application(tk.Frame):
         test_date["text"] = "Test Date:"
         self.canvas.create_window(60, 225, width=100, height=40,
                                   window=test_date)
-
 
         self.year_input = tk.Entry("")
         self.year_input.config(font=16)
@@ -139,7 +135,6 @@ class Application(tk.Frame):
         self.canvas.create_window(540, 225, width=150, height=40,
                                   window=self.activity_input)
         self.activity_input["values"] = ["FLT", "ER", "LST", "HST", "GT"]
-
 
         b_removeAudio = tk.Button(self.master, text="Remove Audio")
         b_removeAudio["command"] = lambda: self.removeAudio(self.fileselection.get())
@@ -179,7 +174,9 @@ class Application(tk.Frame):
                                   window=self.slicenameinput)
 
         b_slice = tk.Button(self.master, text="Get Time Slice")
-        b_slice["command"] = lambda: self.gettimeslice(self.starttimeinput.get(), self.endtimeinput.get(), self.fileselection.get(), self.slicenameinput.get(), self.label1["text"])
+        b_slice["command"] = lambda: self.gettimeslice(self.starttimeinput.get(), self.endtimeinput.get(),
+                                                       self.fileselection.get(), self.slicenameinput.get(),
+                                                       self.label1["text"])
         b_slice.config(bg=self.bgcolor)
         self.canvas.create_window(750, 360, width=100, height=40,
                                   window=b_slice)
@@ -219,13 +216,11 @@ class Application(tk.Frame):
         for f in os.listdir(directory):
             if f.endswith('.mp4'):
                 old = directory + "/" + f
-                print(old)
-                new = old[:len(old)-4] + ".MP4"
-                print(new)
+                new = old[:len(old) - 4] + ".MP4"
                 os.rename(old, new)
             if f.endswith('.AVI'):
                 old = directory + "/" + f
-                new = old[:len(old)-4] + ".avi"
+                new = old[:len(old) - 4] + ".avi"
         for f in os.listdir(directory):
             if f.endswith(".MP4") or f.endswith(".avi"):
                 videofiles.append(f)
@@ -240,10 +235,13 @@ class Application(tk.Frame):
         if re.match("^20[0-9]{2}$", self.year_input.get()) is None:
             messagebox.showerror("Test date", "Input Year(20xx)")
             return None
-        if re.match("^0[1-9]$", self.month_input.get()) is None and re.match("^1[0-2]$", self.month_input.get()) is None:
+        if re.match("^0[1-9]$", self.month_input.get()) is None and re.match("^1[0-2]$",
+                                                                             self.month_input.get()) is None:
             messagebox.showerror("Test date", "Input Month(xx)")
             return None
-        if re.match("^0[1-9]$", self.day_input.get()) is None and re.match("^[1-2][0-9]$", self.day_input.get()) is None and re.match("^3[0-1]$", self.day_input.get()) is None:
+        if re.match("^0[1-9]$", self.day_input.get()) is None and re.match("^[1-2][0-9]$",
+                                                                           self.day_input.get()) is None and re.match(
+                "^3[0-1]$", self.day_input.get()) is None:
             messagebox.showerror("Test date", "Input Day(xx)")
             return None
         if len(self.activity_input.get().strip()) == 0:
@@ -305,14 +303,13 @@ class Application(tk.Frame):
                         return None
             command = ""
             filenum = 1
-            files =list()
+            files = list()
             for f in self.fileselection["values"]:
                 if f != "All":
                     files.append(f)
                     if mode == "compress":
                         if (".mp4" not in f) and (".MP4" not in f):
                             files.remove(f)
-            print(files)
             for f in files:
                 if len(str(filenum)) == 1:
                     outputsuffix = "P" + "0" + str(filenum) + f[len(f) - 4:]
@@ -324,17 +321,19 @@ class Application(tk.Frame):
                     command = command + " & " + self.cmdgenerate(f, outputprefix + outputsuffix, ffmpegoperation)
                 filenum += 1
             totalcommand = "start /wait cmd /c " + "\"" + command + "\""
+            print("command:", command)
             os.system(totalcommand)
         if filename != "All" and filename != "":
             f = self.fileselection.get()
             if mode == "compress":
-                if (".mp4" not in f )and(".MP4" not in f):
+                if (".mp4" not in f) and (".MP4" not in f):
                     message = "Compression is only for Gopro MP4 files"
                     messagebox.showerror(title="Select MP4", message=message)
                     return None
             outputsuffix = "P" + "01" + f[len(f) - 4:]
             command = self.cmdgenerate(filename, outputprefix + outputsuffix, ffmpegoperation)
             totalcommand = "start /wait cmd /c " + "\"" + command + "\""
+            print("command:", command)
             os.system(totalcommand)
 
     def cmdgenerate(self, inputfilename, outputfilename, operation):
@@ -346,22 +345,30 @@ class Application(tk.Frame):
             outputpath = self.outputfolder["text"].replace("/", "\\") + "\\"
             output = outputpath + outputfilename
         while os.path.exists(output):
-            filenum = output[len(output)-6:len(output)-4]
+            filenum = output[len(output) - 6:len(output) - 4]
             if filenum[0] == "0" and filenum[1] != "9":
                 numoffile = int(filenum) + 1
-                print(str(numoffile))
-                output = outputpath + outputfilename[:len(outputfilename)-5] + str(numoffile) + outputfilename[len(outputfilename)-4:]
-                print(output)
+                output = outputpath + outputfilename[:len(outputfilename) - 5] + str(numoffile) + outputfilename[len(
+                    outputfilename) - 4:]
             else:
                 numoffile = int(filenum) + 1
-                output = outputpath + outputfilename[:len(outputfilename)-6] + str(numoffile) + outputfilename[len(outputfilename)-4:]
-                print(output)
+                output = outputpath + outputfilename[:len(outputfilename) - 6] + str(numoffile) + outputfilename[len(
+                    outputfilename) - 4:]
         currentfolder = os.getcwd()
         cmdpath = currentfolder + "\\ffmpeg\\bin\\"
         cmdcommand = cmdpath + "ffmpeg -i " + input + operation + output
         return cmdcommand
 
     def gettimeslice(self, time1, time2, inname, outname, pathin):
+        def get_video_duration(filename):
+            cap = cv2.VideoCapture(filename)
+            if cap.isOpened():
+                rate = cap.get(5)
+                frame_num = cap.get(7)
+                duration = frame_num / rate
+                return duration
+            return -1
+
         if inname == "" or inname == "All":
             message = "Select a file to be processed"
             messagebox.showerror(title="Select a file", message=message)
@@ -393,37 +400,39 @@ class Application(tk.Frame):
         temp = time2.split(":")
         t2 = int(temp[0]) * 3600 + int(temp[1]) * 60 + int(temp[2])
         diff = t2 - t1
-        if diff <= 0:
-            messagebox.showerror("Time Input", "end time should be greater than start time")
+        input = self.label1["text"].replace("/", "\\") + "\\" + inname
+        duration = get_video_duration(input)
+        if t2 > duration:
+            messagebox.showerror("Time error", "End time should not be greater than video duration")
             return None
-        if outname =="":
+        if diff <= 0:
+            messagebox.showerror("Time Input", "End time should be greater than start time")
+            return None
+        if outname == "":
             message = "Input a name for slice"
             messagebox.showerror(title="Input Necessary", message=message)
             return None
-        wrongname = ["/", "\\", ":", "*", "?", "\"", "<", ">", "|", " ", "^", "&"]
+        wrongname = ["/", "\\", ":", "*", "?", "\"", "<", ">", "|", " ", "^", "&", "."]
         for cha in wrongname:
             if cha in outname:
                 message = "Following characters should not be in slice name:" \
-                          "/, \\, :, *, ?, \", <, >, |,  blank, ^, &"
+                          "/, \\, :, *, ?, \", <, >, |,  blank, ^, &, ."
                 messagebox.showerror(title="wrong name", message=message)
                 return None
 
-        output = pathout.replace("/", "\\") + "\\" + outname + inname[len(inname)-4:]
+        output = pathout.replace("/", "\\") + "\\" + outname + inname[len(inname) - 4:]
         if os.path.exists(output):
             overwriteflag = False
             overwriteflag = overwriteflag = tk.messagebox.askokcancel("File exists", "Slice exists, overwrite?")
             if not overwriteflag:
                 return None
-        input = self.label1["text"].replace("/", "\\") + "\\" + inname
         currentfolder = os.getcwd()
         cmdpath = currentfolder + "\\ffmpeg\\bin\\"
-        cmdcommand = cmdpath + "ffmpeg -ss " + time1 + " -t " + str(diff) + " -accurate_seek " + "-i " + input + " -codec copy  -avoid_negative_ts 1 " + output
+        cmdcommand = cmdpath + "ffmpeg -ss " + time1 + " -t " + str(
+            diff) + " -accurate_seek " + "-i " + input + " -codec copy  -avoid_negative_ts 1 " + output
         totalcommand = "start /wait cmd /c " + "\"" + cmdcommand + "\""
+        print("command:", cmdcommand)
         os.system(totalcommand)
-
-
-
-
 
 
 root = tk.Tk()
