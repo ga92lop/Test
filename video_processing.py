@@ -132,9 +132,21 @@ class Application(tk.Frame):
 
         self.activity_input = tk.ttk.Combobox(self.master)
         self.activity_input.config(font=16, state="readonly")
-        self.canvas.create_window(540, 225, width=150, height=40,
+        self.canvas.create_window(500, 225, width=60, height=40,
                                   window=self.activity_input)
         self.activity_input["values"] = ["FLT", "ER", "LST", "HST", "GT"]
+
+        self.check_var1 = tk.StringVar(value = "No Num")
+        b_withnum = tk.Checkbutton(self.master, text="Activity No.", variable=self.check_var1, onvalue= "With Num",
+                                      offvalue= "No Num" )
+        b_withnum.config(bg=self.bgcolor, font=("Courier", 10))
+        self.canvas.create_window(620, 190, width=120, height=30,
+                                  window=b_withnum)
+
+        self.num_input = tk.Entry("")
+        self.num_input.config(font=16)
+        self.canvas.create_window(620, 225, width=120, height=40,
+                                  window=self.num_input)
 
         b_removeAudio = tk.Button(self.master, text="Remove Audio")
         b_removeAudio["command"] = lambda: self.removeAudio(self.fileselection.get())
@@ -264,6 +276,11 @@ class Application(tk.Frame):
                 message = "No file to be processed"
                 messagebox.showerror(title="Select a file", message=message)
                 return None
+        if self.check_var1.get() == "With Num":
+            if re.match("^[0-9]{3}$", self.num_input.get()) is None:
+                message = "Activity number(3 digits: xxx) is necessary"
+                messagebox.showerror(title="Activity number", message=message)
+                return None
         return True
 
     def compress(self, filename):
@@ -290,6 +307,8 @@ class Application(tk.Frame):
 
     def operation(self, filename, ffmpegoperation, mode):
         outputprefix = self.year_input.get() + self.month_input.get() + self.day_input.get() + "_" + self.activity_input.get() + "_"
+        if self.check_var1.get() == "With Num":
+            outputprefix = self.year_input.get() + self.month_input.get() + self.day_input.get() + "_" + self.activity_input.get() + self.num_input.get() + "_"
         if filename == "All":
             if self.outputfolder["text"] != "Same with input folder by default":
                 for f in os.listdir(self.outputfolder["text"]):
@@ -415,7 +434,7 @@ class Application(tk.Frame):
         wrongname = ["/", "\\", ":", "*", "?", "\"", "<", ">", "|", " ", "^", "&", "."]
         for cha in wrongname:
             if cha in outname:
-                message = "Following characters should not be in slice name:" \
+                message = "Following characters should not be in slice name: " \
                           "/, \\, :, *, ?, \", <, >, |,  blank, ^, &, ."
                 messagebox.showerror(title="wrong name", message=message)
                 return None
