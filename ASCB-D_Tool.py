@@ -64,19 +64,30 @@ class Application(tk.Frame):
                                   window=header)
 
         # Resampling function
-        label3 = tk.Label(text="Resampling rate(Hz):")
+        oringinalrate_label = tk.Label(text="Original \n Rate(Hz):")
+        oringinalrate_label.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(90, 200, width=120, height=40,
+                                  window=oringinalrate_label)
+
+        org_rateselection = tk.ttk.Combobox(self.master)
+        org_rateselection["values"] = (8, 16, 32, 64, 80, 128, 2048)
+        org_rateselection.configure(state="readonly")
+        self.canvas.create_window(200, 200, width=100, height=30,
+                                  window=org_rateselection)
+
+        label3 = tk.Label(text="Resampling \n Rate(Hz):")
         label3.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(130, 200, width=200, height=30,
+        self.canvas.create_window(360, 200, width=120, height=40,
                                   window=label3)
 
         rateselection = tk.ttk.Combobox(self.master)
-        rateselection["values"] = (1, 2, 4, 8, 10, 16, 20)
+        rateselection["values"] = (1, 2, 4, 8, 16)
         rateselection.configure(state="readonly")
-        self.canvas.create_window(420, 200, width=240, height=30,
+        self.canvas.create_window(470, 200, width=100, height=30,
                                   window=rateselection)
 
-        b_resampling = tk.Button(self.master, text="Resampling")
-        b_resampling["command"] = lambda: self.resampling(self.fileselection.get(), rateselection.get())
+        b_resampling = tk.Button(self.master, text="Resample CSV")
+        b_resampling["command"] = lambda: self.resampling(self.fileselection.get(),org_rateselection.get(), rateselection.get())
         b_resampling.config(bg=self.bgcolor)
         self.canvas.create_window(800, 200, width=100, height=30,
                                   window=b_resampling)
@@ -93,23 +104,23 @@ class Application(tk.Frame):
         # Reformat function
         label4 = tk.Label(text="UTC Year:")
         label4.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(80, 250, width=100, height=30,
+        self.canvas.create_window(80, 300, width=100, height=30,
                                   window=label4)
         self.b_utcyear = tk.Entry("")
         self.b_utcyear.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(270, 250, width=100, height=30,
+        self.canvas.create_window(270, 300, width=100, height=30,
                                   window=self.b_utcyear)
 
         label4 = tk.Label(text="(Use this year when no input)")
         label4.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(480, 250, width=300, height=30,
+        self.canvas.create_window(480, 300, width=300, height=30,
                                   window=label4)
 
 
-        b_reformat = tk.Button(self.master, text="Reformat")
+        b_reformat = tk.Button(self.master, text="Reformat ASCB_D")
         b_reformat["command"] = lambda: self.reformat_csv()
         b_reformat.config(bg=self.bgcolor)
-        self.canvas.create_window(800, 250, width=100, height=30,
+        self.canvas.create_window(800, 300, width=100, height=30,
                                   window=b_reformat)
 
         # Button to quit
@@ -145,16 +156,25 @@ class Application(tk.Frame):
             self.label1["fg"] = "green"
         return csvfiles
 
-    def resampling(self, filename, rate):
-        if filename == "" or rate == "":
-            errormessage = "please select one file and one resampling rate, thank you:D"
+    def resampling(self, filename, original_rate, rate):
+        if filename == "" or rate == "" or original_rate == "":
+            errormessage = "please select one file and original rate and resampling rate, thank you:D"
             tk.messagebox.showerror(title=None, message=errormessage)
             return None
-        if "_resampled_" in filename and "80Hz" not in filename:
-            errormessage = "Cannot resample file which is not 80Hz"
+        if "_resampled_" in filename:
+            errormessage = "Cannot resample file which is aleardy resampled"
             tk.messagebox.showerror(title=None, message=errormessage)
             return None
-        ration = int(80 / int(rate))
+        ration = int(original_rate) / int(rate)
+        if ration <= 1:
+            errormessage = "cannot resample to a higher rate than original data"
+            tk.messagebox.showerror(title=None, message=errormessage)
+            return None
+        if not float(ration).is_integer():
+            errormessage = "Make sure original rate is integral number of resampling rate"
+            tk.messagebox.showerror(title=None, message=errormessage)
+            return None
+
         inputfile = self.label1["text"] + "/" + filename
         Outputfile = inputfile[0:len(inputfile) - 4] + "_resampled_" + rate + "Hz.csv"
         overwriteflag = True

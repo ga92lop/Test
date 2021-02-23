@@ -136,7 +136,7 @@ class Application(tk.Frame):
                                   window=self.activity_input)
         self.activity_input["values"] = ["FLT", "ER", "LST", "HST", "GT"]
 
-        self.check_var1 = tk.StringVar(value = "No Num")
+        self.check_var1 = tk.StringVar(value = "With Num")
         b_withnum = tk.Checkbutton(self.master, text="Activity No.", variable=self.check_var1, onvalue= "With Num",
                                       offvalue= "No Num" )
         b_withnum.config(bg=self.bgcolor, font=("Courier", 10))
