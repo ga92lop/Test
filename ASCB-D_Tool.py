@@ -4,6 +4,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 import csv
 import os
+import xlsxwriter
 from PIL import ImageTk, Image
 import datetime
 import re
@@ -69,25 +70,24 @@ class Application(tk.Frame):
         self.canvas.create_window(90, 200, width=120, height=40,
                                   window=oringinalrate_label)
 
-        org_rateselection = tk.ttk.Combobox(self.master)
-        org_rateselection["values"] = (8, 16, 32, 64, 80, 128, 2048)
-        org_rateselection.configure(state="readonly")
+        v = tk.StringVar(value='80')
+        self.org_rateselection = tk.Entry(textvariable = v)
+        self.org_rateselection.config(bg=self.bgcolor, font=("Courier", 12))
         self.canvas.create_window(200, 200, width=100, height=30,
-                                  window=org_rateselection)
+                                  window=self.org_rateselection)
 
         label3 = tk.Label(text="Resampling \n Rate(Hz):")
         label3.config(bg=self.bgcolor, font=("Courier", 12))
         self.canvas.create_window(360, 200, width=120, height=40,
                                   window=label3)
 
-        rateselection = tk.ttk.Combobox(self.master)
-        rateselection["values"] = (1, 2, 4, 8, 16)
-        rateselection.configure(state="readonly")
+        self.rateselection = tk.Entry("")
+        self.rateselection.config(bg=self.bgcolor, font=("Courier", 12))
         self.canvas.create_window(470, 200, width=100, height=30,
-                                  window=rateselection)
+                                  window=self.rateselection)
 
         b_resampling = tk.Button(self.master, text="Resample CSV")
-        b_resampling["command"] = lambda: self.resampling(self.fileselection.get(),org_rateselection.get(), rateselection.get())
+        b_resampling["command"] = lambda: self.resampling(self.fileselection.get(), self.org_rateselection.get(), self.rateselection.get())
         b_resampling.config(bg=self.bgcolor)
         self.canvas.create_window(800, 200, width=100, height=30,
                                   window=b_resampling)
@@ -145,6 +145,8 @@ class Application(tk.Frame):
         self.label1["text"] = selectedfolder
         self.fileselection['values'] = self.list_files(selectedfolder)
 
+
+
     def list_files(self, directory):
         csvfiles = []
         for f in os.listdir(directory):
@@ -156,6 +158,8 @@ class Application(tk.Frame):
             self.label1["fg"] = "green"
         return csvfiles
 
+
+
     def resampling(self, filename, original_rate, rate):
         if filename == "" or rate == "" or original_rate == "":
             errormessage = "please select one file and original rate and resampling rate, thank you:D"
@@ -165,9 +169,13 @@ class Application(tk.Frame):
             errormessage = "Cannot resample file which is aleardy resampled"
             tk.messagebox.showerror(title=None, message=errormessage)
             return None
+        if not original_rate.isdecimal() or not rate.isdecimal():
+            errormessage = "Please input integer as rate value"
+            tk.messagebox.showerror(title=None, message=errormessage)
+            return None
         ration = int(original_rate) / int(rate)
-        if ration <= 1:
-            errormessage = "cannot resample to a higher rate than original data"
+        if not ration.is_integer():
+            errormessage = "The initial sampling rate should be an integer multiple of the resampling rate"
             tk.messagebox.showerror(title=None, message=errormessage)
             return None
         if not float(ration).is_integer():
@@ -208,7 +216,15 @@ class Application(tk.Frame):
             errormessage = "please make sure data file is closed and accessible, thank you:D"
             tk.messagebox.showerror(title=None, message=errormessage)
 
+
+
     def reformat_csv(self):
+        def is_number(s):
+            try:
+                float(s)
+                return True
+            except ValueError:
+                return False
         if self.fileselection.get() == "":
             errormessage = "please select one file, thank you:D"
             tk.messagebox.showerror(title=None, message=errormessage)
@@ -226,11 +242,10 @@ class Application(tk.Frame):
                 utcyear = inputyear
 
         inputfile = self.label1["text"] + "/" + self.fileselection.get()
-        Outputfile = inputfile[0:len(inputfile) - 4] + "_reformat.csv"
-        overwriteflag = True
+        Outputfile = inputfile[0:len(inputfile) - 4] + "_reformat.xlsx"
         if os.path.exists(Outputfile):
-            overwriteflag = tk.messagebox.askokcancel("resampled file exists", "Resampled file exists, overwrite?")
-        if overwriteflag == False:
+            errormessage = "Excel file exists, please remove it before reformat, thank you:D"
+            tk.messagebox.showerror(title=None, message=errormessage)
             return None
 
         new_headers = list()
@@ -246,7 +261,7 @@ class Application(tk.Frame):
                 headers = next(spamreader)
                 if "IRIG Time" not in headers or "Parameter Name" not in headers or "Value" not in headers:
                     errormessage = "Please configure FLIGHTLINE to set \"IRIG Time\", \"Parameter Name\" and " \
-                                   "\"Value\" in the header of CSV file"
+                                   "\"Value\" in the first row of CSV file"
                     tk.messagebox.showerror(title=None, message=errormessage)
                     return None
                 secound_row = next(spamreader)
@@ -269,27 +284,56 @@ class Application(tk.Frame):
                             utc_time = datetime.datetime.strptime(utc_time_str, '%Y:%j:%H:%M:%S.%f')
                             values.append(utc_time)
                         else:
-                            values.append(col)
+                            if "0x " in col:
+                                values.append(col[len(col) - 1:])
+                            else:
+                                values.append(col)
                     parameter_position += 1
                 print("Create New file and Writing data...")
+                workbook = xlsxwriter.Workbook(Outputfile)
+                worksheet = workbook.add_worksheet()
+                worksheet.set_column('A:A', 30)
+                date_format = workbook.add_format({'num_format': 'dd/mm/yy hh:mm:ss.000',
+                                                   'align': 'left'})
+                row_num = 0
+                for col_num, col_value in enumerate(new_headers):
+                    worksheet.write_string(row_num, col_num, col_value)
+                row_num += 1
+                for col_num, col_value in enumerate(values):
+                    if isinstance(col_value, str):
+                        if is_number(col_value):
+                            worksheet.write_number(row_num, col_num, float(col_value))
+                        else:
+                            worksheet.write_string(row_num, col_num, col_value)
+                    else:
+                        worksheet.write_datetime(row_num, col_num, col_value, date_format)
+                row_num += 1
 
-                with open(Outputfile, 'w', newline='') as newcsvfile:
-                    filewriter = csv.writer(newcsvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
-                    filewriter.writerow(new_headers)
-                    filewriter.writerow(values)
-                    for row in spamreader:
-                        values.clear()
-                        parameter_position = 0
-                        for col in row:
-                            if parameter_position in values_position:
-                                if parameter_position == values_position[0]:
-                                    utc_time_str = utcyear + ":" + col
-                                    utc_time = datetime.datetime.strptime(utc_time_str, '%Y:%j:%H:%M:%S.%f')
-                                    values.append(utc_time)
+                for row in spamreader:
+                    values.clear()
+                    parameter_position = 0
+                    for col_value in row:
+                        if parameter_position in values_position:
+                            if parameter_position == values_position[0]:
+                                utc_time_str = utcyear + ":" + col_value
+                                utc_time = datetime.datetime.strptime(utc_time_str, '%Y:%j:%H:%M:%S.%f')
+                                values.append(utc_time)
+                            else:
+                                if "0x " in col_value:
+                                    values.append(col_value[len(col_value)-1:])
                                 else:
-                                    values.append(col)
-                            parameter_position += 1
-                        filewriter.writerow(values)
+                                    values.append(col_value)
+                        parameter_position += 1
+                    for col_num, col_value in enumerate(values):
+                        if isinstance(col_value, str):
+                            if is_number(col_value):
+                                worksheet.write_number(row_num, col_num, float(col_value))
+                            else:
+                                worksheet.write_string(row_num, col_num, col_value)
+                        else:
+                            worksheet.write_datetime(row_num, col_num, col_value, date_format)
+                    row_num += 1
+                workbook.close()
                 print("reformat finished!:D")
         except PermissionError:
             errormessage = "please make sure data file is closed and accessible, thank you:D"
