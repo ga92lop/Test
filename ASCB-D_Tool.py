@@ -26,35 +26,54 @@ class Application(tk.Frame):
 
     def create_widgets(self):
         # Select folder and file
-        label0 = tk.Label(self.master)
-        label0["text"] = "Current folder:"
-        label0.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(75, 50, width=150, height=30,
-                                  window=label0)
+        inputfolder_label = tk.Label(self.master)
+        inputfolder_label["text"] = "Input folder:"
+        inputfolder_label.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(75, 25, width=150, height=30,
+                                  window=inputfolder_label)
 
-        self.label1 = tk.Label(self.master)
-        self.label1["text"] = self.defaultPath
-        self.label1.config(bg=self.bgcolor)
-        self.canvas.create_window(425, 50, width=550, height=30,
-                                  window=self.label1)
+        self.inputfolder = tk.Label(self.master)
+        self.inputfolder["text"] = self.defaultPath
+        self.inputfolder.config(bg=self.bgcolor)
+        self.canvas.create_window(425, 25, width=550, height=30,
+                                  window=self.inputfolder)
 
         folderselection = tk.Button(self.master)
         folderselection["text"] = "Select a folder"
         folderselection["command"] = lambda: self.folderselection()
         folderselection.config(bg=self.bgcolor)
-        self.canvas.create_window(800, 50, width=100, height=30,
+        self.canvas.create_window(800, 25, width=100, height=30,
                                   window=folderselection)
 
-        label2 = tk.Label(self.master)
-        label2["text"] = "Select a file:"
-        label2.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(100, 100, width=200, height=30,
-                                  window=label2)
+        outputfolder_label = tk.Label(self.master)
+        outputfolder_label["text"] = "Output folder:"
+        outputfolder_label.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(75, 70, width=150, height=30,
+                                  window=outputfolder_label)
+
+        self.outputfolder = tk.Label(self.master)
+        self.outputfolder["text"] = "Same with input folder by default"
+        self.outputfolder.config(bg=self.bgcolor)
+        self.canvas.create_window(425, 70, width=550, height=30,
+                                  window=self.outputfolder)
+
+        outfolderselection = tk.Button(self.master)
+        outfolderselection["text"] = "Select a folder"
+        outfolderselection["command"] = lambda: self.outputfolderselection()
+        outfolderselection.config(bg=self.bgcolor)
+        self.canvas.create_window(800, 70, width=100, height=30,
+                                  window=outfolderselection)
+
+        filesel_label = tk.Label(self.master)
+        filesel_label["text"] = "Select a file:"
+        filesel_label.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(100, 110, width=200, height=30,
+                                  window=filesel_label)
 
         self.fileselection = tk.ttk.Combobox(self.master)
         self.fileselection["values"] = self.list_files(self.defaultPath)
         self.fileselection.configure(state="readonly")
-        self.canvas.create_window(460, 100, width=480, height=30,
+        self.canvas.create_window(460, 110, width=480, height=30,
                                   window=self.fileselection)
 
         # Function Start:
@@ -70,29 +89,29 @@ class Application(tk.Frame):
         self.canvas.create_window(90, 200, width=120, height=40,
                                   window=oringinalrate_label)
 
-        v = tk.StringVar(value='80')
-        self.org_rateselection = tk.Entry(textvariable = v)
+        default_rate = tk.StringVar(value='80')
+        self.org_rateselection = tk.Entry(textvariable=default_rate)
         self.org_rateselection.config(bg=self.bgcolor, font=("Courier", 12))
         self.canvas.create_window(200, 200, width=100, height=30,
                                   window=self.org_rateselection)
 
-        label3 = tk.Label(text="Resampling \n Rate(Hz):")
-        label3.config(bg=self.bgcolor, font=("Courier", 12))
+        resamplingrate_label = tk.Label(text="Resampling \n Rate(Hz):")
+        resamplingrate_label.config(bg=self.bgcolor, font=("Courier", 12))
         self.canvas.create_window(360, 200, width=120, height=40,
-                                  window=label3)
+                                  window=resamplingrate_label)
 
-        self.rateselection = tk.Entry("")
-        self.rateselection.config(bg=self.bgcolor, font=("Courier", 12))
+        self.resamplingrate = tk.Entry("")
+        self.resamplingrate.config(bg=self.bgcolor, font=("Courier", 12))
         self.canvas.create_window(470, 200, width=100, height=30,
-                                  window=self.rateselection)
+                                  window=self.resamplingrate)
 
         b_resampling = tk.Button(self.master, text="Resample CSV")
-        b_resampling["command"] = lambda: self.resampling(self.fileselection.get(), self.org_rateselection.get(), self.rateselection.get())
+        b_resampling["command"] = lambda: self.resampling(self.fileselection.get(), self.org_rateselection.get(), self.resamplingrate.get())
         b_resampling.config(bg=self.bgcolor)
         self.canvas.create_window(800, 200, width=100, height=30,
                                   window=b_resampling)
-        self.check_var1 = tk.StringVar()
-        b_withheader = tk.Checkbutton(self.master, text="with header", variable=self.check_var1, onvalue="with header",
+        self.check_header = tk.StringVar()
+        b_withheader = tk.Checkbutton(self.master, text="with header", variable=self.check_header, onvalue="with header",
                                       offvalue="No header")
         b_withheader.config(bg=self.bgcolor, font=("Courier", 10))
         self.canvas.create_window(650, 200, width=120, height=30,
@@ -102,25 +121,33 @@ class Application(tk.Frame):
 
 
         # Reformat function
-        label4 = tk.Label(text="UTC Year:")
-        label4.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(80, 300, width=100, height=30,
-                                  window=label4)
-        self.b_utcyear = tk.Entry("")
+        utcyear_label = tk.Label(text="UTC Year:")
+        utcyear_label.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(90, 270, width=120, height=40,
+                                  window=utcyear_label)
+
+        default_utcyear = tk.StringVar(value=str(datetime.datetime.today().year))
+        self.b_utcyear = tk.Entry(textvariable=default_utcyear)
         self.b_utcyear.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(270, 300, width=100, height=30,
+        self.canvas.create_window(200, 270, width=100, height=30,
                                   window=self.b_utcyear)
 
-        label4 = tk.Label(text="(Use this year when no input)")
-        label4.config(bg=self.bgcolor, font=("Courier", 12))
-        self.canvas.create_window(480, 300, width=300, height=30,
-                                  window=label4)
+        delimiter_label = tk.Label(text="delimiter:")
+        delimiter_label.config(bg=self.bgcolor, font=("Courier", 12))
+        self.canvas.create_window(350, 270, width=100, height=30,
+                                  window=delimiter_label)
 
+        self.delimiter_sel = tk.ttk.Combobox(self.master)
+        self.delimiter_sel["values"] = ["Comma", "Semicolon", "Tab", "Space"]
+        self.delimiter_sel.configure(state="readonly")
+        self.delimiter_sel.current(0)
+        self.canvas.create_window(470, 270, width=100, height=30,
+                                  window=self.delimiter_sel)
 
         b_reformat = tk.Button(self.master, text="Reformat ASCB_D")
         b_reformat["command"] = lambda: self.reformat_csv()
         b_reformat.config(bg=self.bgcolor)
-        self.canvas.create_window(800, 300, width=100, height=30,
+        self.canvas.create_window(800, 270, width=100, height=30,
                                   window=b_reformat)
 
         # Button to quit
@@ -138,14 +165,20 @@ class Application(tk.Frame):
     """
 
     def folderselection(self):
-        currentfolder = self.label1["text"]
+        self.fileselection.set('')
+        currentfolder = self.inputfolder["text"]
         selectedfolder = tk.filedialog.askdirectory()
         if selectedfolder == "":
             selectedfolder = currentfolder
-        self.label1["text"] = selectedfolder
+        self.inputfolder["text"] = selectedfolder
         self.fileselection['values'] = self.list_files(selectedfolder)
 
-
+    def outputfolderselection(self):
+        currentfolder = self.outputfolder["text"]
+        selectedfolder = tk.filedialog.askdirectory()
+        if selectedfolder == "":
+            selectedfolder = currentfolder
+        self.outputfolder["text"] = selectedfolder
 
     def list_files(self, directory):
         csvfiles = []
@@ -153,11 +186,22 @@ class Application(tk.Frame):
             if f.endswith('.csv'):
                 csvfiles.append(f)
         if csvfiles == []:
-            self.label1["fg"] = "red"
+            self.inputfolder["fg"] = "red"
         else:
-            self.label1["fg"] = "green"
+            self.inputfolder["fg"] = "green"
         return csvfiles
 
+    def getdelimiter(self):
+        delimiter = ""
+        if self.delimiter_sel.get() == "Comma":
+            delimiter = ","
+        elif self.delimiter_sel.get() == "Semicolon":
+            delimiter = ";"
+        elif self.delimiter_sel.get() == "Tab":
+            delimiter = "\t"
+        elif self.delimiter_sel.get() == "Space":
+            delimiter = " "
+        return delimiter
 
 
     def resampling(self, filename, original_rate, rate):
@@ -183,25 +227,30 @@ class Application(tk.Frame):
             tk.messagebox.showerror(title=None, message=errormessage)
             return None
 
-        inputfile = self.label1["text"] + "/" + filename
-        Outputfile = inputfile[0:len(inputfile) - 4] + "_resampled_" + rate + "Hz.csv"
+        inputfile = self.inputfolder["text"] + "/" + filename
+        if self.outputfolder["text"] == "Same with input folder by default":
+            Outputfile = inputfile[0:len(inputfile)-4] + "_resampled_" + rate + "Hz.csv"
+        else:
+            Outputfile = self.outputfolder["text"] + "/" + filename[0:len(filename)-4] + "_resampled_" + rate + "Hz.csv"
         overwriteflag = True
         if os.path.exists(Outputfile):
             overwriteflag = tk.messagebox.askokcancel("resampled file exists", "Resampled file exists, overwrite?")
         if overwriteflag == False:
             return None
+
+        selecteddelimiter = self.getdelimiter()
         try:
             with open(inputfile, newline='') as csvfile:
                 print("Open original data file")
-                spamreader = csv.reader(csvfile)
+                spamreader = csv.reader(csvfile, delimiter=selecteddelimiter)
                 counter = 0
                 with open(Outputfile, 'w', newline='') as newcsvfile:
                     print("Open resampled data file")
-                    filewriter = csv.writer(newcsvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+                    filewriter = csv.writer(newcsvfile, delimiter=selecteddelimiter, quoting=csv.QUOTE_MINIMAL)
                     print("Writing data...")
 
                     # check box clicked, write header in new file, start resampling from second row
-                    if self.check_var1.get() == "with header":
+                    if self.check_header.get() == "with header":
                         header = next(spamreader)
                         filewriter.writerow(header)
 
@@ -219,18 +268,11 @@ class Application(tk.Frame):
 
 
     def reformat_csv(self):
-        def is_number(s):
-            try:
-                float(s)
-                return True
-            except ValueError:
-                return False
+        #general check about user input
         if self.fileselection.get() == "":
             errormessage = "please select one file, thank you:D"
             tk.messagebox.showerror(title=None, message=errormessage)
             return None
-        if self.b_utcyear.get() == "":
-            utcyear = str(datetime.datetime.today().year)
         if self.b_utcyear.get() != "":
             template = "^20[1-2][0-9]$"
             inputyear = self.b_utcyear.get()
@@ -241,27 +283,40 @@ class Application(tk.Frame):
             else:
                 utcyear = inputyear
 
-        inputfile = self.label1["text"] + "/" + self.fileselection.get()
-        Outputfile = inputfile[0:len(inputfile) - 4] + "_reformat.xlsx"
+        # define input & output filename
+        inputfile = self.inputfolder["text"] + "/" + self.fileselection.get()
+        if self.outputfolder["text"] == "Same with input folder by default":
+            Outputfile = inputfile[0:len(inputfile)-4] + "_reformat.xlsx"
+        else:
+            Outputfile = self.outputfolder["text"] + self.fileselection.get()[0:len(inputfile)-4] + "_reformat.xlsx"
         if os.path.exists(Outputfile):
             errormessage = "Excel file exists, please remove it before reformat, thank you:D"
             tk.messagebox.showerror(title=None, message=errormessage)
             return None
 
+        # reformat file:
+        def is_number(s):       # function will be used later
+            try:
+                float(s)
+                return True
+            except ValueError:
+                return False
         new_headers = list()
         new_headers.append("UTC Time")
         parameter_position = 0
         col_count = 0
         values_position = list()
         values = list()
+        selecteddelimiter = self.getdelimiter()
         try:
             with open(inputfile, newline='') as csvfile:
                 print("Open original file")
-                spamreader = csv.reader(csvfile, delimiter=',')
+                spamreader = csv.reader(csvfile, delimiter=selecteddelimiter)
                 headers = next(spamreader)
+                print(headers)
                 if "IRIG Time" not in headers or "Parameter Name" not in headers or "Value" not in headers:
-                    errormessage = "Please configure FLIGHTLINE to set \"IRIG Time\", \"Parameter Name\" and " \
-                                   "\"Value\" in the first row of CSV file"
+                    errormessage = "Please make sure right delimiter selected and \"IRIG Time\", \"Parameter Name\" " \
+                                   "and " "\"Value\" in the first row of CSV file"
                     tk.messagebox.showerror(title=None, message=errormessage)
                     return None
                 secound_row = next(spamreader)
@@ -285,7 +340,11 @@ class Application(tk.Frame):
                             values.append(utc_time)
                         else:
                             if "0x " in col:
-                                values.append(col[len(col) - 1:])
+                                lastbit = col[len(col)-1]
+                                if is_number(lastbit):
+                                    values.append(lastbit)
+                                else:
+                                    values.append(col[3:5])
                             else:
                                 values.append(col)
                     parameter_position += 1
@@ -320,7 +379,11 @@ class Application(tk.Frame):
                                 values.append(utc_time)
                             else:
                                 if "0x " in col_value:
-                                    values.append(col_value[len(col_value)-1:])
+                                    lastbit = col_value[len(col_value) - 1]
+                                    if is_number(lastbit):
+                                        values.append(lastbit)
+                                    else:
+                                        values.append(col_value[3:5])
                                 else:
                                     values.append(col_value)
                         parameter_position += 1

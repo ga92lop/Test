@@ -25,11 +25,11 @@ class Application(tk.Frame):
 
     def create_widgets(self):
         # Select folder and file
-        label0 = tk.Label(self.master)
-        label0["text"] = "Input folder:"
-        label0.config(bg=self.bgcolor, font=("Courier", 12))
+        inputfolder_label = tk.Label(self.master)
+        inputfolder_label["text"] = "Input folder:"
+        inputfolder_label.config(bg=self.bgcolor, font=("Courier", 12))
         self.canvas.create_window(75, 30, width=150, height=30,
-                                  window=label0)
+                                  window=inputfolder_label)
 
         self.inputfolder = tk.Label(self.master)
         self.inputfolder["text"] = self.defaultPath
@@ -63,11 +63,11 @@ class Application(tk.Frame):
         self.canvas.create_window(800, 70, width=100, height=30,
                                   window=outfolderselection)
 
-        infoldersel_label = tk.Label(self.master)
-        infoldersel_label["text"] = "Select a file:"
-        infoldersel_label.config(bg=self.bgcolor, font=("Courier", 12))
+        inputfilesel_label = tk.Label(self.master)
+        inputfilesel_label["text"] = "Select a file:"
+        inputfilesel_label.config(bg=self.bgcolor, font=("Courier", 12))
         self.canvas.create_window(100, 110, width=200, height=30,
-                                  window=infoldersel_label)
+                                  window=inputfilesel_label)
 
         self.fileselection = tk.ttk.Combobox(self.master)
         self.fileselection["values"] = self.list_files(self.defaultPath)
