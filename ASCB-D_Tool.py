@@ -261,6 +261,8 @@ class Application(tk.Frame):
                             filewriter.writerow(row)
                         counter += 1
             print("Finished:D")
+
+            self.fileselection['values'] = self.list_files(self.inputfolder["text"])
         except PermissionError:
             errormessage = "please make sure data file is closed and accessible, thank you:D"
             tk.messagebox.showerror(title=None, message=errormessage)
